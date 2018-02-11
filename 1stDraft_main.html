@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Data Storytelling Analysis</title>
+    <script type="text/javascript" src="js/d3.js"></script>
+    <style type="text/css">
+
+        .line {
+            fill: none;
+            stroke: darkslategray;
+            stroke-width: 1;
+        }
+
+        .dot {
+            fill: darkslategray;
+            stroke: white;
+            stroke-width: 1;
+            opacity: .9;
+        }
+
+        .dot:hover {
+            transition-duration: 0.4s;
+            -webkit-transition-duration: 0.4s;
+            fill: white;
+            stroke: cornflowerblue;
+            stroke-width: 1.5;
+            r: 6;
+        }
+
+        .tooltip {
+            transition-duration: 0.4s;
+            -webkit-transition-duration: 0.4s;
+        }
+
+        .x_axis {
+            stroke: darkslategray;
+            stroke-width: .1;
+        }
+
+        .y_axis {
+            stroke: darkslategray;
+            stroke-width: .1;
+        }
+
+        .bold_highlight{
+            color: cornflowerblue;
+            font-weight: bold;
+        }
+
+        h1{
+            color: darkslategray;
+        }
+
+        p{
+            color: darkslategray;
+        }
+
+        rect{
+            fill: darkslategray;
+            transition-duration: 0.4s;
+            -webkit-transition-duration: 0.4s;
+        }
+
+        rect:hover{
+            fill: transparent;
+            stroke: cornflowerblue;
+        }
+
+        div {
+            display: inline-block;
+        }
+
+        input {
+            height: 25px;
+            width: 500px;
+
+            /* Orient vertically */
+            -webkit-appearance: slider-horizontal;
+            writing-mode: bt-lr;
+        }
+
+        button{
+            color: darkslategray;
+            transition-duration: 0.1s;
+            -webkit-transition-duration: 0.1s;
+        }
+
+        button:hover{
+            color: cornflowerblue;
+            border: 1px solid cornflowerblue;
+            background-color: transparent;
+            border-radius: 4px;
+        }
+
+        body{
+            /*background-image:url("resources/images/Studio Top.png");*/
+        }
+
+
+    </style>
+</head>
+<body>
+<h1>
+    An analysis of power creep in Nintendo's Pokemon
+</h1>
+<p>
+    In 1997 the companies Nintendo, Game Freak and Creatures created a video game that would become a global sensation
+    known as <span class="bold_highlight">Pokemon</span>.  Inspired by the concept of collecting bugs, the game’s revolves around catching a multitude of
+    different pokemon each with their own characteristics and skills.  As this franchise grew in popularity, new games
+    with newer groups of pokemon were released.
+</p>
+
+<p>
+    When game franchises are successful and introduce new content that interacts with old content, game developers are
+    presented with the task of managing a phenomenon known as <span class="bold_highlight">power creep</span>.
+    This phenomena occurs when, to push sales, developers make new content that is objectively better than older
+    content.  While power creep is not strictly bad, it is generally not viewed with positive connotation because old
+    content is seen as obsolete and is ignored or shunned and leads to a lack of variety in game play style.
+</p>
+
+<p>
+    Pokemon started its first game with just 151 pokemon and over 20 years and 7 generations, that number has
+    increased by roughly 100 each generation to the current <span class="bold_highlight">807 individual pokemon</span>.
+    We are going to investigate how well Nintendo has mitigated power creep as new pokemon have been
+    added to the roster over the years.
+</p>
+
+<p>
+    In the world of Pokemon, there are a few ways that we can rate power.  There are base stats: things like
+    strength and speed that are the core of a pokemon and there are type advantages.  Type advantages are a little more
+    complicated and are related to the type combination of the pokemon itself.  Pokemon boasts an impressive
+    <span class="bold_highlight">18 types leading to 171 unique combinations</span> that are available for use.
+    Lastly, pokemon can be categorized as legendary; legendary pokemon, while being rare are balanced by their
+    single availability per game.  We will take a look at each of these factors and their relative amounts per generation.
+</p>
+
+
+
+<br/>
+<button id="legend_graph" onclick="draw_legend_graph();">Draw Legend Graph</button>
+<button id="baseTotal_graph" onclick="draw_baseTotal_graph();">Draw Base Total Graph</button>
+<button id="againstTotal_graph" onclick="draw_againstTotal_graph();">Draw Against Total Graph</button>
+<br/>
+<div id="targetZone"/>
+<script type="text/javascript">
+
+    var h = 300;
+    var w = 600;
+    var padding = 40;
+
+    function flush_graph(){
+       d3.select("svg").remove();
+       d3.select("body").selectAll("input").remove();
+       d3.select("div").selectAll("br").remove();
+       d3.select("div").selectAll(".graphInfo").remove();
+    }
+
+    function remove_tooltip(){
+        d3.selectAll("#tooltip").transition().duration(150).attr("font-size", "0px").remove();
+    }
+
+    function draw_baseTotal_graph(){
+        flush_graph();
+
+        d3.json("data/PokemonAggregate.json", function (json) {
+
+            json.forEach(function (d) {
+                d.Generation = +d.Generation;
+                d.Average_BaseTotal = +d.Average_BaseTotal;
+                d.Average_AgainstTotal = +d.Average_AgainstTotal;
+                d.Legendary_Count = +d.Legendary_Count;
+            });
+
+            xScale = d3.scaleLinear()
+                .domain([
+                    d3.min(json, function (d) {
+                        return d.Generation;
+                    }),
+                    d3.max(json, function (d) {
+                        return d.Generation;
+                    })
+                ])
+                .range([padding, w - padding * 2]);
+
+            yScale = d3.scaleLinear()
+                .domain([0, d3.max(json, function (d) {
+                    return d.Average_BaseTotal;
+                })])
+                .range([h - padding, padding]);
+
+
+            //Define axes
+            xAxis = d3.axisBottom()
+                .scale(xScale)
+                .ticks(7);
+
+            //Define Y axis
+            yAxis = d3.axisLeft()
+                .scale(yScale);
+
+            var line = d3.line()
+                .x(function (d) {
+                    return xScale(d.Generation);
+                })
+                .y(function (d) {
+                    return yScale(d.Average_BaseTotal);
+                });
+
+            var vis = d3.select("div");
+
+            vis.append("text")
+                .text("Graph Title")
+                .attr("class", "graphInfo");
+
+            vis.append("br");
+
+            vis.append("input")
+                .attr("type", "range")
+                .attr("min", "0")
+                .attr("max", "400")
+                .attr("step", "50")
+                .attr("value", "0")
+                .attr("orient", "horizontal");
+
+            vis.append("br");
+
+            var svg = d3.select("div")
+                .append("svg")
+                .attr("width", w)
+                .attr("height", h);
+
+            svg.append("path")
+                .datum(json)
+                .attr("class", "line")
+                .transition().duration(30)
+                .attr("d", line);
+
+            svg.selectAll(".dot")
+                .data(json)
+                .enter().append("circle") // Uses the enter().append() method
+                .attr("class", "dot") // Assign a class for styling
+                .attr("cx", function(d) { return xScale(d.Generation) })
+                .attr("cy", function(d) { return yScale(d.Average_BaseTotal) })
+                .attr("r", 4)
+                .on("mouseover", function(d) {
+
+                var xPosition = parseInt(d3.select(this).attr("cx")) - 5;
+                if(xPosition <= padding + 5){
+                    xPosition = xPosition + 40;
+                }
+                var yPosition = parseInt(d3.select(this).attr("cy")) - 14;
+
+                //Create the tooltip label
+                svg.append("text")
+                    .attr("id", "tooltip")
+                    .attr("x", xPosition)
+                    .attr("y", yPosition)
+                    .attr("text-anchor", "middle")
+                    .attr("font-family", "sans-serif")
+                    .attr("font-size", "11px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "cornflowerblue")
+                    .text(d.Average_BaseTotal);
+            })
+                .on("mouseout", function() {
+                    remove_tooltip()
+                });
+
+            svg.append("g")
+                .attr("class", "x_axis")
+                .attr("transform", "translate(0," + (h - padding) + ")")
+                .call(xAxis);
+
+            svg.append("g")
+                .attr("class", "y_axis")
+                .attr("transform", "translate(" + (padding) + ",0)")
+                .call(yAxis);
+
+            d3.select("input")
+                .on("change", function() {
+
+                    var threshold = +d3.select(this).node().value;
+
+                    d3.json("data/PokemonAggregate.json", function (json) {
+
+                        json.forEach(function (d) {
+                            d.Generation = +d.Generation;
+                            d.Average_BaseTotal = +d.Average_BaseTotal;
+                            d.Average_AgainstTotal = +d.Average_AgainstTotal;
+                            d.Legendary_Count = +d.Legendary_Count;
+                        });
+
+
+                        xScale.domain([
+                            d3.min(json, function(d) { return d.Generation; }),
+                            d3.max(json, function(d) { return d.Generation; })
+                        ]);
+
+                        yScale.domain([threshold, d3.max(json, function(d) { return d.Average_BaseTotal; })]);
+
+                        var svg = d3.select("body").transition();
+
+
+                        svg.selectAll(".line")
+                            .duration(700)
+                            .ease(d3.easePoly)
+                            .attr("d", line);
+                        svg.selectAll(".dot")
+                            .duration(700)
+                            .ease(d3.easePoly)
+                            .attr("cx", function(d) { return xScale(d.Generation) })
+                            .attr("cy", function(d) { return yScale(d.Average_BaseTotal) });
+                        svg.selectAll(".x_axis")
+                            .duration(700)
+                            .ease(d3.easePoly)
+                            .call(xAxis);
+                        svg.selectAll(".y_axis")
+                            .duration(700)
+                            .ease(d3.easePoly)
+                            .call(yAxis);
+                    })});
+    })};
+
+
+    function draw_againstTotal_graph(){
+        flush_graph();
+
+        d3.json("data/PokemonAggregate.json", function (json) {
+
+            json.forEach(function (d) {
+                d.Generation = +d.Generation;
+                d.Average_BaseTotal = +d.Average_BaseTotal;
+                d.Average_AgainstTotal = +d.Average_AgainstTotal;
+                d.Legendary_Count = +d.Legendary_Count;
+            });
+
+            xScale = d3.scaleLinear()
+                .domain([
+                    d3.min(json, function (d) {
+                        return d.Generation;
+                    }),
+                    d3.max(json, function (d) {
+                        return d.Generation;
+                    })
+                ])
+                .range([padding, w - padding * 2]);
+
+            yScale = d3.scaleLinear()
+                .domain([0, d3.max(json, function (d) {
+                    return d.Average_AgainstTotal;
+                })])
+                .range([h - padding, padding]);
+
+
+            //Define axes
+            xAxis = d3.axisBottom()
+                .scale(xScale)
+                .ticks(7);
+
+            //Define Y axis
+            yAxis = d3.axisLeft()
+                .scale(yScale);
+
+            var line = d3.line()
+                .x(function (d) {
+                    return xScale(d.Generation);
+                })
+                .y(function (d) {
+                    return yScale(d.Average_AgainstTotal);
+                });
+
+            var vis = d3.select("div");
+            vis.append("input")
+                .attr("type", "range")
+                .attr("min", "0")
+                .attr("max", "18.5")
+                .attr("step", "18.5")
+                .attr("value", "0")
+                .attr("orient", "horizontal");
+
+            vis.append("br");
+
+            var svg = d3.select("div")
+                .append("svg")
+                .attr("width", w)
+                .attr("height", h);
+
+            svg.append("path")
+                .datum(json)
+                .attr("class", "line")
+                .attr("d", line);
+
+            svg.selectAll(".dot")
+                .data(json)
+                .enter().append("circle") // Uses the enter().append() method
+                .attr("class", "dot") // Assign a class for styling
+                .attr("cx", function(d) { return xScale(d.Generation) })
+                .attr("cy", function(d) { return yScale(d.Average_AgainstTotal) })
+                .attr("r", 4)
+                .on("mouseover", function(d) {
+
+                    var xPosition = parseInt(d3.select(this).attr("cx")) - 5;
+                    if(xPosition <= padding + 5){
+                        xPosition = xPosition + 40;
+                    }
+                    var yPosition = parseInt(d3.select(this).attr("cy")) - 14;
+
+                    //Create the tooltip label
+                    svg.append("text")
+                        .attr("id", "tooltip")
+                        .attr("x", xPosition)
+                        .attr("y", yPosition)
+                        .attr("text-anchor", "middle")
+                        .attr("font-family", "sans-serif")
+                        .attr("font-size", "11px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", "cornflowerblue")
+                        .attr("background", "white")
+                        .text(d.Average_AgainstTotal);
+                })
+                .on("mouseout", function() {
+                    remove_tooltip()
+                });
+
+            svg.append("g")
+                .attr("class", "x_axis")
+                .attr("transform", "translate(0," + (h - padding) + ")")
+                .call(xAxis);
+
+            svg.append("g")
+                .attr("class", "y_axis")
+                .attr("transform", "translate(" + (padding) + ",0)")
+                .call(yAxis);
+
+            d3.select("input")
+                .on("change", function() {
+
+                    var threshold = +d3.select(this).node().value;
+
+                    d3.json("data/PokemonAggregate.json", function (json) {
+
+                        json.forEach(function (d) {
+                            d.Generation = +d.Generation;
+                            d.Average_BaseTotal = +d.Average_BaseTotal;
+                            d.Average_AgainstTotal = +d.Average_AgainstTotal;
+                            d.Legendary_Count = +d.Legendary_Count;
+                        });
+
+
+                        xScale.domain([
+                            d3.min(json, function(d) { return d.Generation; }),
+                            d3.max(json, function(d) { return d.Generation; })
+                        ]);
+
+                        yScale.domain([threshold, d3.max(json, function(d) { return d.Average_AgainstTotal; })]);
+
+                        var svg = d3.select("body").transition();
+
+
+                        svg.selectAll(".line")
+                            .duration(700)
+                            .ease(d3.easePoly)
+                            .attr("d", line);
+                        svg.selectAll(".dot")
+                            .duration(700)
+                            .ease(d3.easePoly)
+                            .attr("cx", function(d) { return xScale(d.Generation) })
+                            .attr("cy", function(d) { return yScale(d.Average_AgainstTotal) });
+                        svg.selectAll(".x_axis")
+                            .duration(700)
+                            .ease(d3.easePoly)
+                            .call(xAxis);
+                        svg.selectAll(".y_axis")
+                            .duration(700)
+                            .ease(d3.easePoly)
+                            .call(yAxis);
+                    })});
+        })};
+
+
+    function draw_legend_graph(){
+        flush_graph();
+        d3.json("data/PokemonAggregate.json", function (json) {
+
+            json.forEach(function (d) {
+                d.Generation = +d.Generation;
+                d.Average_BaseTotal = +d.Average_BaseTotal;
+                d.Average_AgainstTotal = +d.Average_AgainstTotal;
+                d.Legendary_Count = +d.Legendary_Count;
+            });
+
+            //d3.select("svg").remove();
+            //d3.select("input").remove();
+
+            var xScale = d3.scaleBand()
+                .domain(d3.range(json.length))
+                .rangeRound([padding, w - padding])
+                .paddingInner(0.05);
+
+            var yScale = d3.scaleLinear()
+                .domain([0, d3.max(json, function(d) { return d.Legendary_Count; })])
+                .range([h - padding, 0]);
+
+            var svg = d3.select("div")
+                .append("svg")
+                .attr("width", w)
+                .attr("height", h);
+
+            //Create bars
+            svg.selectAll("rect")
+                .data(json)
+                .enter()
+                .append("rect")
+                .attr("x", function(d, i) {
+                    return xScale(i);
+                })
+                .attr("y", function(d) {
+                    return yScale(d.Legendary_Count);
+                })
+                .attr("width", xScale.bandwidth())
+                .attr("height", function(d) {
+                    return (yScale(0) - yScale(d.Legendary_Count));
+                })
+                .on("mouseover", function(d) {
+
+                    //Get this bar's x/y values, then augment for the tooltip
+                    var xPosition = parseFloat(d3.select(this).attr("x")) + xScale.bandwidth() / 2;
+                    var yPosition = parseFloat(d3.select(this).attr("y")) + 14;
+
+                    //Create the tooltip label
+                    svg.append("text")
+                        .attr("id", "tooltip")
+                        .attr("x", xPosition)
+                        .attr("y", yPosition)
+                        .attr("text-anchor", "middle")
+                        .attr("font-family", "sans-serif")
+                        .attr("font-size", "11px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", "cornflowerblue")
+                        .text(d.Legendary_Count);
+
+                })
+                .on("mouseout", function() {
+                    d3.selectAll("#tooltip")
+                        .transition()
+                        .duration(150)
+                        .attr("font-size", "0px")
+                        .attr("fill", "darkslategray")
+                        .remove();
+                });
+
+
+
+            //Create Labels
+
+
+            /*
+            svg.selectAll("text")
+                .data(json)
+                .enter()
+                .append("text")
+                .text(function(d) {
+                    return d.Legendary_Count;
+                })
+                .attr("text-anchor", "middle")
+                .attr("x", function(d, i) {
+                    return xScale(i) + xScale.bandwidth() / 2;
+                })
+                .attr("y", function(d) {
+                    return yScale(d.Legendary_Count) + 15;
+                })
+                .attr("font-family", "sans-serif")
+                .attr("font-size", "11px")
+                .attr("fill", "white");
+
+                */
+
+            xAxis = d3.axisBottom()
+                .scale(xScale)
+                .tickFormat(function(d) { return json[d].Generation; });
+
+            //Define Y axis
+            yAxis = d3.axisLeft()
+                .scale(yScale);
+
+            svg.append("g")
+                .attr("class", "x_axis")
+                .attr("transform", "translate(0," + (h - padding) + ")")
+                .call(xAxis);
+
+            svg.append("g")
+                .attr("class", "y_axis")
+                .attr("transform", "translate(" + (padding) + ",0)")
+                .call(yAxis);
+
+
+        })};
+
+
+
+
+</script>
+</body>
+</html>

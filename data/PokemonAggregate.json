@@ -1,0 +1,9 @@
+[
+  {"Generation":1,"Average_BaseTotal":416.2516556,"Average_AgainstTotal":19.00331126,"Legendary_Count":5,"Legendary_Average":0.033112583,"Base_Total_Dif":0,"Against_Total_Dif":0,"Legendary_Dif":0,"Legend_Avg_Dif":0},
+  {"Generation":2,"Average_BaseTotal":413.18,"Average_AgainstTotal":19.08,"Legendary_Count":6,"Legendary_Average":0.06,"Base_Total_Dif":-0.007379324,"Against_Total_Dif":0.004035546,"Legendary_Dif":0.2,"Legend_Avg_Dif":0.812},
+  {"Generation":3,"Average_BaseTotal":420.0222222,"Average_AgainstTotal":19.13333333,"Legendary_Count":10,"Legendary_Average":0.074074074,"Base_Total_Dif":0.016559907,"Against_Total_Dif":0.002795248,"Legendary_Dif":0.666666667,"Legend_Avg_Dif":0.234567901},
+  {"Generation":4,"Average_BaseTotal":451.1775701,"Average_AgainstTotal":19.0046729,"Legendary_Count":13,"Legendary_Average":0.121495327,"Base_Total_Dif":0.074175475,"Against_Total_Dif":-0.006724413,"Legendary_Dif":0.3,"Legend_Avg_Dif":0.640186916},
+  {"Generation":5,"Average_BaseTotal":427.0384615,"Average_AgainstTotal":19.04326923,"Legendary_Count":13,"Legendary_Average":0.083333333,"Base_Total_Dif":-0.053502457,"Against_Total_Dif":0.002030886,"Legendary_Dif":0,"Legend_Avg_Dif":-0.314102564},
+  {"Generation":6,"Average_BaseTotal":437.6111111,"Average_AgainstTotal":19.09027778,"Legendary_Count":6,"Legendary_Average":0.083333333,"Base_Total_Dif":0.024758073,"Against_Total_Dif":0.002468512,"Legendary_Dif":-0.538461538,"Legend_Avg_Dif":0},
+  {"Generation":7,"Average_BaseTotal":448.1625,"Average_AgainstTotal":18.9375,"Legendary_Count":17,"Legendary_Average":0.2125,"Base_Total_Dif":0.024111337,"Against_Total_Dif":-0.00800291,"Legendary_Dif":1.833333333,"Legend_Avg_Dif":1.55}
+]
